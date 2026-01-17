@@ -12,6 +12,8 @@ import (
 type Decoder struct {
 	Source []byte
 	pos uint64
+	Chunks []Chunk
+	TEXTChunks []TEXTChunk
 	IHDR IHDRChunk
 	PLTE PLTEChunk
 	IDAT []IDATChunk
@@ -125,15 +127,33 @@ func (d *Decoder) ReadChunk() error {
 		return errors.NewInvalidCRCError("CRC Hash compare failed, image file could be corrupted")
 	}
 
-	switch chunkTypeFromBytes(chunk_type) {
+
+
+	switch chunk_type_map[string(chunk_type)] {
 	case IHDR:
 		if chunk_len_uint != 13 {
-			return errors.NewInvalidChunkLength(
+			return errors.NewInvalidIHDRChunk(
 				fmt.Sprintf("IHDR chunk lenght is incorrect:\n%s",
 				util.GotExpectedFmt(chunk_len_uint,"13"),
 			))
 		}
+		if len(d.Chunks) > 0 {
+			return errors.NewInvalidIHDRChunk(
+				fmt.Sprintf("IHDR chunk should be FIRST, chunks:\n%s",
+				util.GotExpectedFmt(len(d.Chunks), "0"),
+			))
+		}
+
 		d.IHDR = *parseIHDR(chunk_data)
+		d.Chunks = append(d.Chunks, &d.IHDR)
+	case tEXt:
+		tEXt_chunk, err := parseTEXT(chunk_data, chunk_len_uint)
+		if err != nil {
+			return err
+		}
+
+		d.TEXTChunks = append(d.TEXTChunks, *tEXt_chunk)
+		d.Chunks = append(d.Chunks, tEXt_chunk)
 	case PLTE:
 	case IDAT:
 	case IEND:

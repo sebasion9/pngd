@@ -22,7 +22,11 @@ type InvalidCRCError struct {
 	*BaseDecoderError
 }
 
-type InvalidChunkLength struct {
+type InvalidIHDRChunk struct {
+	*BaseDecoderError
+}
+
+type InvalidtEXtChunk struct {
 	*BaseDecoderError
 }
 
@@ -38,6 +42,10 @@ func NewInvalidCRCError(msg string) *InvalidCRCError {
 	return &InvalidCRCError{&BaseDecoderError{Message:msg}}
 }
 
-func NewInvalidChunkLength(msg string) *InvalidChunkLength {
-	return &InvalidChunkLength{&BaseDecoderError{Message:msg}}
+func NewInvalidIHDRChunk(msg string) *InvalidIHDRChunk {
+	return &InvalidIHDRChunk{&BaseDecoderError{Message:msg}}
+}
+
+func NewInvalidtEXtChunk(msg string) *InvalidtEXtChunk {
+	return &InvalidtEXtChunk{&BaseDecoderError{Message:msg}}
 }

@@ -44,7 +44,9 @@ func run(opts *cli.Options) error {
 		return err
 	}
 
-	fmt.Printf("%+v\n", decoder.IHDR)
+	for _, c := range decoder.Chunks {
+		fmt.Printf("%+v\n", c)
+	}
 
 	return nil
 }
