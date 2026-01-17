@@ -18,12 +18,12 @@ func(c *BaseChunk) Length() uint64 { return c.length}
 
 type chunk_type int
 const (
-        IHDR chunk_type = iota
-		PLTE
-		IDAT
-		IEND
+	IHDR chunk_type = iota
+	PLTE
+	IDAT
+	IEND
 
-		tEXt
+	tEXt
 )
 
 //TODO: all types

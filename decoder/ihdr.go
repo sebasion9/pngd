@@ -12,7 +12,17 @@ type IHDRChunk struct {
     Compression byte
     Filter byte
     Interlace byte
+    Bpp byte
 }
+
+var bpp_map = map[byte]byte {
+    0:1,
+    2:3,
+    3:1,
+    4:2,
+    6:4,
+}
+
 
 func parseIHDR(data []byte) *IHDRChunk {
     w := binary.BigEndian.Uint32(data[:4])
@@ -30,5 +40,6 @@ func parseIHDR(data []byte) *IHDRChunk {
 	Compression: data[10],
 	Filter: data[11],
 	Interlace: data[12],
+	Bpp: bpp_map[data[9]],
     }
 }

@@ -34,6 +34,10 @@ type InvalidIENDChunk struct {
 	*BaseDecoderError
 }
 
+type InvalidFilterError struct {
+	*BaseDecoderError
+}
+
 func NewInvalidSignatureError(msg string) *InvalidSignatureError {
 	return &InvalidSignatureError{&BaseDecoderError{Message: msg}}
 }
@@ -56,4 +60,8 @@ func NewInvalidtEXtChunk(msg string) *InvalidtEXtChunk {
 
 func NewInvalidIENDChunk(msg string) *InvalidIENDChunk{
 	return &InvalidIENDChunk{&BaseDecoderError{Message:msg}}
+}
+
+func NewInvalidFilterError(msg string) *InvalidFilterError{
+	return &InvalidFilterError{&BaseDecoderError{Message:msg}}
 }

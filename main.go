@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"image/color"
 	"os"
 	"pngd/cli"
 	"pngd/decoder"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/image/bmp"
 )
 
 func main() {
@@ -44,14 +47,9 @@ func run(opts *cli.Options) error {
 		return err
 	}
 
-	for _, c := range decoder.Chunks {
-		fmt.Printf("%+v\n", c)
-	}
-
 	for _, w := range decoder.Warnings {
 		fmt.Println(w)
 	}
-
 
 	return nil
 }

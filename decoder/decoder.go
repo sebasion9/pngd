@@ -1,25 +1,34 @@
 package decoder
 
 import (
+	"bytes"
+	"compress/zlib"
 	"encoding/binary"
 	"fmt"
 	"hash/crc32"
+	"io"
 	"pngd/errors"
 	"pngd/util"
 )
 
 
 type Decoder struct {
-	Warnings []string
+	Filter
 	Source []byte
 	pos uint64
+
+	Raw []byte
 	Chunks []Chunk
+
 	TEXTChunks []TEXTChunk
 	IDATChunks []IDATChunk
 	IHDR IHDRChunk
 	// PLTE PLTEChunk
 	IDAT []IDATChunk
 	IEND IENDChunk
+
+
+	Warnings []string
 }
 
 func NewDecoder(source []byte) *Decoder {
@@ -66,9 +75,42 @@ func (d *Decoder) Decode() error {
 			return err
 		}
 		if d.Chunks[len(d.Chunks)-1].Type() == IEND {
-			return nil
+			break
 		}
 	}
+
+	var buf bytes.Buffer
+	for _, idat := range d.IDATChunks {
+		buf.Write(idat.data)
+	}
+
+
+	zr, err := zlib.NewReader(&buf)
+	if err != nil {
+		return err
+	}
+	defer zr.Close()
+
+	decomp, err := io.ReadAll(zr)
+	if err != nil {
+		return err
+	}
+
+	d.Raw = decomp
+
+
+	row_size := int(1 + d.IHDR.Width * uint32(d.IHDR.Bpp))
+	d.Filter.CompressedScanlines = make([][]byte, d.IHDR.Height)
+	for y := 0; y < int(d.IHDR.Height); y++ {
+		start := y * row_size
+		end := start + row_size
+
+		d.Filter.CompressedScanlines[y] = d.Raw[start:end]
+	}
+
+	d.Filter.Reconstruct(d.IHDR.Bpp)
+
+
 	return nil
 }
 
@@ -158,9 +200,9 @@ func (d *Decoder) ReadChunk() error {
 	}
 
 
-	fmt.Println("[L] ", chunk_len_uint)
-	fmt.Println("[T] " + string(chunk_type[:]))
-	fmt.Printf("[D] %x\n", chunk_data)
+	// fmt.Println("[L] ", chunk_len_uint)
+	// fmt.Println("[T] " + string(chunk_type[:]))
+	// fmt.Printf("[D] %x\n", chunk_data)
 
 	d.pos += 12 + chunk_len_uint
 	return nil 

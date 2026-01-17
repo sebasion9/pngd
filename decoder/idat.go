@@ -1,8 +1,8 @@
 package decoder
 
+
 type IDATChunk struct {
     BaseChunk
-    Decompressed []byte
 }
 
 func parseIDAT(data []byte, length uint64) (*IDATChunk, error) {
@@ -13,6 +13,5 @@ func parseIDAT(data []byte, length uint64) (*IDATChunk, error) {
 	    length: length,
 	    type_: IDAT,
 	},
-	Decompressed: data,
     }, nil
 }
