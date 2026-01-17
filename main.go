@@ -48,6 +48,11 @@ func run(opts *cli.Options) error {
 		fmt.Printf("%+v\n", c)
 	}
 
+	for _, w := range decoder.Warnings {
+		fmt.Println(w)
+	}
+
+
 	return nil
 }
 

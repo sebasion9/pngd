@@ -10,12 +10,14 @@ import (
 
 
 type Decoder struct {
+	Warnings []string
 	Source []byte
 	pos uint64
 	Chunks []Chunk
 	TEXTChunks []TEXTChunk
+	IDATChunks []IDATChunk
 	IHDR IHDRChunk
-	PLTE PLTEChunk
+	// PLTE PLTEChunk
 	IDAT []IDATChunk
 	IEND IENDChunk
 }
@@ -42,7 +44,6 @@ func (d *Decoder) ValidateSignature() error {
 	(uint64(d.Source[0]) << 56);
 
 	if packed != signature {
-		// return errors.NewInvalidSignatureError(fmt.Sprintf("Invalid signature: \nexpected:\t%x\ngot:\t\t%x", signature, packed))
 		return errors.NewInvalidSignatureError(
 			fmt.Sprintf("Invalid signature:\n%s",
 			util.GotExpectedFmt(signature, packed)),
@@ -57,41 +58,15 @@ func (d *Decoder) ValidateSignature() error {
 // uint4 chunk_len
 // 4 bytes chunk type
 // chunk_len bytes of data
-// 4 byte crc - check for data corruption
-/*
-This table summarizes some properties of the standard chunk types.
-   Critical chunks (must appear in this order, except PLTE
-                    is optional):
-   
-           Name  Multiple  Ordering constraints
-                   OK?
-   
-           IHDR    No      Must be first
-           PLTE    No      Before IDAT
-           IDAT    Yes     Multiple IDATs must be consecutive
-           IEND    No      Must be last
-   
-   Ancillary chunks (need not appear in this order):
-   
-           Name  Multiple  Ordering constraints
-                   OK?
-   
-           cHRM    No      Before PLTE and IDAT
-           gAMA    No      Before PLTE and IDAT
-           sBIT    No      Before PLTE and IDAT
-           bKGD    No      After PLTE; before IDAT
-           hIST    No      After PLTE; before IDAT
-           tRNS    No      After PLTE; before IDAT
-           pHYs    No      Before IDAT
-           tIME    No      None
-           tEXt    Yes     None
-           zTXt    Yes     None
-*/
+// 4 byte crc - check for data integrity
 
 func (d *Decoder) Decode() error {
 	for d.pos < uint64(len(d.Source)) {
 		if err := d.ReadChunk(); err != nil {
 			return err
+		}
+		if d.Chunks[len(d.Chunks)-1].Type() == IEND {
+			return nil
 		}
 	}
 	return nil
@@ -122,14 +97,18 @@ func (d *Decoder) ReadChunk() error {
 
 	chunk_crc = d.Source[d.pos+8+chunk_len_uint:d.pos+12+chunk_len_uint]
 
-	//TODO:
 	if !d.checkCRC(chunk_type, chunk_data, chunk_crc) {
 		return errors.NewInvalidCRCError("CRC Hash compare failed, image file could be corrupted")
 	}
 
+	ct, ok := chunk_type_map[string(chunk_type)];
+	if !ok {
+		d.Warnings = append(d.Warnings, fmt.Sprintf("[W] \"%s\" is not supported", string(chunk_type)))
+		d.pos += 12 + chunk_len_uint
+		return nil
+	}
 
-
-	switch chunk_type_map[string(chunk_type)] {
+	switch ct {
 	case IHDR:
 		if chunk_len_uint != 13 {
 			return errors.NewInvalidIHDRChunk(
@@ -154,9 +133,27 @@ func (d *Decoder) ReadChunk() error {
 
 		d.TEXTChunks = append(d.TEXTChunks, *tEXt_chunk)
 		d.Chunks = append(d.Chunks, tEXt_chunk)
-	case PLTE:
 	case IDAT:
+		idat_chunk, err := parseIDAT(chunk_data, chunk_len_uint)
+		if err != nil {
+			return err
+		}
+
+		d.IDATChunks = append(d.IDATChunks, *idat_chunk)
+		d.Chunks = append(d.Chunks, idat_chunk)
+	case PLTE:
+		//TODO:
 	case IEND:
+		if chunk_len_uint != 0 {
+			return errors.NewInvalidIENDChunk("IEND chunk should be 0 bytes long")
+		}
+		iend_chunk := &IENDChunk{
+			BaseChunk: BaseChunk {
+				data: chunk_data, length: chunk_len_uint, type_: IEND,
+			},
+		}
+		d.IEND = *iend_chunk
+		d.Chunks = append(d.Chunks, iend_chunk)
 	default:
 	}
 
