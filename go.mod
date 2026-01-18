@@ -13,3 +13,5 @@ require (
 	golang.org/x/term v0.37.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
 )
+require avid v0.0.0
+replace avid => ../avid

@@ -30,6 +30,18 @@ type Decoder struct {
 	warnings []string
 }
 
+func (d *Decoder) SetSrc(src []byte) {
+	d.source = src
+	d.pos = 0
+	d.chunks = d.chunks[:0]
+	d.textChunks = d.textChunks[:0]
+	d.idatChunks = d.idatChunks[:0]
+	d.raw = d.raw[:0]
+	d.ihdr = IHDRChunk{}
+	d.iend = IENDChunk{}
+	d.Filter = Filter{}
+}
+
 func (d *Decoder) Chunks() []Chunk {
 	return d.chunks
 }
