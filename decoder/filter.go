@@ -18,79 +18,80 @@ r is reconstructed byte
 */
 
 type Filter struct {
-	CompressedScanlines [][]byte
-	Recon[][]byte
-	Bpp int
+	Scanlines [][]byte
+	recon[][]byte
+	bpp int
 }
 
-func (f *Filter) None(idx int) {
-	scanline := f.CompressedScanlines[idx][1:]
+
+func (f *Filter) none(idx int) {
+	scanline := f.Scanlines[idx][1:]
 	recon := make([]byte, len(scanline))
 	copy(recon, scanline)
-	f.Recon[idx] = recon
+	f.recon[idx] = recon
 }
 
-func (f *Filter) Sub(idx int) {
-	scanline := f.CompressedScanlines[idx]
+func (f *Filter) sub(idx int) {
+	scanline := f.Scanlines[idx]
 	recon := make([]byte, len(scanline) - 1)
 	var a byte
 	for i := 0; i < len(recon); i++ {
-		if i < f.Bpp {
+		if i < f.bpp {
 			a = 0
 		} else {
-			a = recon[i - f.Bpp]
+			a = recon[i - f.bpp]
 		}
 		recon[i] = scanline[i+1] + a
 	}
-	f.Recon[idx] = recon
+	f.recon[idx] = recon
 }
 
-func (f *Filter) Up(idx int) {
+func (f *Filter) up(idx int) {
 	if idx == 0 {
-		f.None(idx)
+		f.none(idx)
 		return
 	}
 
-	scanline := f.CompressedScanlines[idx]
-	prev := f.Recon[idx - 1]
+	scanline := f.Scanlines[idx]
+	prev := f.recon[idx - 1]
 	recon := make([]byte, len(scanline) - 1)
 	for i := 0; i < len(recon); i++ {
 		recon[i] = scanline[i + 1] + prev[i]
 	}
-	f.Recon[idx] = recon
+	f.recon[idx] = recon
 }
 
-func (f *Filter) Average(idx int) {
-	scanline := f.CompressedScanlines[idx]
+func (f *Filter) average(idx int) {
+	scanline := f.Scanlines[idx]
 	recon := make([]byte, len(scanline) - 1)
 	var prev []byte
 	if idx > 0 {
-		prev = f.Recon[idx - 1]
+		prev = f.recon[idx - 1]
 	} else {
 		prev = make([]byte, len(scanline) - 1)
 	}
 
 	var a byte
 	for i := 0; i < len(recon); i++ {
-		if i < f.Bpp {
+		if i < f.bpp {
 			a = 0
 		} else {
-			a = recon[i - f.Bpp]
+			a = recon[i - f.bpp]
 		}
 		avg := (int(a) + int(prev[i])) / 2
 		recon[i] = scanline[i + 1] + byte(avg)
 	}
 
-	f.Recon[idx] = recon
+	f.recon[idx] = recon
 }
 
-func (f *Filter) Paeth(idx int) {
-	scanline := f.CompressedScanlines[idx]
+func (f *Filter) paeth(idx int) {
+	scanline := f.Scanlines[idx]
 	recon := make([]byte, len(scanline) - 1)
 
 	var prev []byte
 	if idx > 0 {
-		prev = f.Recon[idx - 1]
+		prev = f.recon[idx - 1]
 	} else {
 		prev = make([]byte, len(scanline) - 1)
 	}
@@ -98,16 +99,16 @@ func (f *Filter) Paeth(idx int) {
 	var a, b, c byte
 	for i := 0; i < len(recon); i++ {
 		b = prev[i]
-		if i < f.Bpp {
+		if i < f.bpp {
 			c = 0
 			a = 0
 		} else {
-			a = recon[i - f.Bpp]
-			c = prev[i - f.Bpp]
+			a = recon[i - f.bpp]
+			c = prev[i - f.bpp]
 		}
 		recon[i] = scanline[i + 1] + util.PaethPredictor(a, b, c)
 	}
-	f.Recon[idx] = recon
+	f.recon[idx] = recon
 
 }
 
@@ -128,32 +129,32 @@ var filter_type_map = map[byte]FilterType {
 	4:PAETH,
 }
 
-func (f *Filter) Reconstruct(bpp byte) error {
-	f.Bpp = int(bpp)
-	f.Recon = make([][]byte, len(f.CompressedScanlines))
-	for i, cs := range f.CompressedScanlines {
+func (f *Filter) Reconstruct(bpp byte) ([]byte,error) {
+	f.bpp = int(bpp)
+	f.recon = make([][]byte, len(f.Scanlines))
+	for i, cs := range f.Scanlines {
 
 		filter_type, ok := filter_type_map[cs[0]]
 		if !ok {
-			return errors.NewInvalidFilterError(
+			return nil, errors.NewInvalidFilterError(
 				fmt.Sprintf("Byte %d is an invalid filter", cs[0]))
 		}
 		switch filter_type {
 		case NONE:
-			f.None(i)
+			f.none(i)
 		case SUB:
-			f.Sub(i)
+			f.sub(i)
 		case UP:
-			f.Up(i)
+			f.up(i)
 		case AVG:
-			f.Average(i)
+			f.average(i)
 		case PAETH:
-			f.Paeth(i)
+			f.paeth(i)
 		default:
-			f.None(i)
+			f.none(i)
 		}
 	}
-	return nil
+	return util.Flatten(f.recon), nil
 }
 
 

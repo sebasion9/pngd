@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
-	"pngd/bmp"
 	"pngd/cli"
 	dc "pngd/decoder"
-	"pngd/util"
 
 	"github.com/spf13/cobra"
 )
@@ -30,6 +28,7 @@ func main() {
 }
 
 
+// example usage
 func run(opts *cli.Options) error {
 	bytes, err := os.ReadFile(opts.Input)
 	if err != nil {
@@ -42,23 +41,15 @@ func run(opts *cli.Options) error {
 		return err
 	}
 
-	if err = decoder.Decode(); err != nil {
+	// decoded, err := decoder.Decode()
+	_, err = decoder.Decode()
+	if err != nil {
 		return err
 	}
 
-	for _, w := range decoder.Warnings {
-		fmt.Println(w)
-	}
-
-	buf := util.Flatten(decoder.Filter.Recon)
-
 	decoder.Info()
-	switch ct := decoder.IHDR.GetColorType();{
-	case ct == dc.RGB:
-		bmp.RGBToBMP(opts.Output, int(decoder.IHDR.Width), int(decoder.IHDR.Height), buf)
-	case ct == dc.RGBA:
-		bmp.RGBAToBMP(opts.Output, int(decoder.IHDR.Width), int(decoder.IHDR.Height), buf)
-	default:
+	for _, w := range decoder.Warnings() {
+		fmt.Println(w)
 	}
 
 	return nil
