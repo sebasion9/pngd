@@ -12,12 +12,20 @@ import (
 
 func main() {
 	args := os.Args
-	if len(args) != 2 {
-		log.Fatalf("usage: pngd <file.png>\n")
+	if len(args) < 2 {
+		log.Fatalf("usage: pngd <file.png> --ascii\n")
 	}
 
 	path := args[1]
 	source, err := os.ReadFile(path)
+
+	ascii := false
+	if len(args) == 3 {
+		if args[2] == "--ascii" || args[2] == "-a" {
+			ascii = true
+		}
+	}
+
 	if err != nil {
 		log.Fatalf("Failed to read file: %s\n%v\n", path, err.Error())
 	}
@@ -36,16 +44,16 @@ func main() {
 
 	// write to screen
 	s, err := tcell.NewScreen()
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 
-    if err := s.Init(); err != nil {
-        panic(err)
-    }
-    defer s.Fini()
+	if err := s.Init(); err != nil {
+		panic(err)
+	}
+	defer s.Fini()
 
-    style := tcell.StyleDefault
+	style := tcell.StyleDefault
 
 	tw, th := s.Size()
 	eff_h := th*2
@@ -65,6 +73,10 @@ func main() {
 
 	white := '█'
 	black := '░'
+	if ascii {
+		white = '@'
+		black = ' '
+	}
 
 	for y := 0; y < th; y++ {
 		for x := 0; x < tw; x++ {
@@ -74,7 +86,7 @@ func main() {
 			if img_x >= img_w || img_y >= img_h {
 				continue
 			}
-			
+
 			i := (img_y*img_w + img_x) * bpp
 			r := buf[i]
 			g := buf[i+1]
@@ -90,14 +102,14 @@ func main() {
 		}
 	}
 
-    s.Show()
+	s.Show()
 
-    for {
-        ev := s.PollEvent()
-        if _, ok := ev.(*tcell.EventKey); ok {
-            break
-        }
-    }
+	for {
+		ev := s.PollEvent()
+		if _, ok := ev.(*tcell.EventKey); ok {
+			break
+		}
+	}
 
 }
 
