@@ -8,7 +8,7 @@ import (
 	"hash/crc32"
 	"io"
 	"pngd/errors"
-	"pngd/util"
+	"pngd/internal"
 )
 
 
@@ -50,11 +50,13 @@ func (d *Decoder) IEND() *IENDChunk {
 	return &d.iend
 }
 
-func (d *Decoder) Info() {
-	fmt.Printf("[i] IHDR dump start\n")
-	fmt.Printf("[i] interlace:  %d\n", d.ihdr.Interlace)
-	fmt.Printf("[i] color type: %v\n", d.ihdr.ColorType)
-	fmt.Printf("[i] IHDR dump end\n")
+func (d *Decoder) Info() []string {
+	info := make([]string, 4)
+	info[0] = "[i] IHDR dump start\n"
+	info[1] = fmt.Sprintf("[i] interlace:  %d\n", d.ihdr.Interlace)
+	info[2] = fmt.Sprintf("[i] color type: %v\n", d.ihdr.ColorType)
+	info[3] = "[i] IHDR dump end\n"
+	return info
 }
 
 func (d *Decoder) Warnings() []string {
@@ -85,7 +87,7 @@ func (d *Decoder) ValidateSignature() error {
 	if packed != signature {
 		return errors.NewInvalidSignatureError(
 			fmt.Sprintf("Invalid signature:\n%s",
-			util.GotExpectedFmt(signature, packed)),
+			internal.GotExpectedFmt(signature, packed)),
 		)
 	}
 
@@ -152,6 +154,11 @@ func (d *Decoder) ReadChunk() error {
 	var chunk_type []byte
 	var chunk_data []byte
 	var chunk_crc []byte
+
+	if d.pos < 8 {
+		return errors.NewInvalidSignatureError("Did not validate signature")
+	}
+
 	if d.pos + 4 > uint64(len(d.source)) {
 		return errors.NewInvalidChunkError("Failed to read chunk len")
 	}
@@ -188,13 +195,13 @@ func (d *Decoder) ReadChunk() error {
 		if chunk_len_uint != 13 {
 			return errors.NewInvalidIHDRChunk(
 				fmt.Sprintf("IHDR chunk lenght is incorrect:\n%s",
-				util.GotExpectedFmt(chunk_len_uint,"13"),
+				internal.GotExpectedFmt(chunk_len_uint,"13"),
 			))
 		}
 		if len(d.chunks) > 0 {
 			return errors.NewInvalidIHDRChunk(
 				fmt.Sprintf("IHDR chunk should be FIRST, chunks:\n%s",
-				util.GotExpectedFmt(len(d.chunks), "0"),
+				internal.GotExpectedFmt(len(d.chunks), "0"),
 			))
 		}
 
@@ -247,8 +254,6 @@ func (d *Decoder) checkCRC(chunk_type []byte, chunk_data []byte, chunk_crc []byt
 	crc := crc32.ChecksumIEEE(append(chunk_type, chunk_data...))
 	expected := binary.BigEndian.Uint32(chunk_crc)
 	if crc != expected {
-		fmt.Printf("calculated:\t%x\n", crc)
-		fmt.Printf("chunk_crc:\t%x\n", expected)
 		return false
 	}
 	return true

@@ -3,7 +3,7 @@ package decoder
 import (
 	"fmt"
 	"pngd/errors"
-	"pngd/util"
+	"pngd/internal"
 )
 
 /*
@@ -106,7 +106,7 @@ func (f *Filter) paeth(idx int) {
 			a = recon[i - f.bpp]
 			c = prev[i - f.bpp]
 		}
-		recon[i] = scanline[i + 1] + util.PaethPredictor(a, b, c)
+		recon[i] = scanline[i + 1] + internal.PaethPredictor(a, b, c)
 	}
 	f.recon[idx] = recon
 
@@ -154,7 +154,8 @@ func (f *Filter) Reconstruct(bpp byte) ([]byte,error) {
 			f.none(i)
 		}
 	}
-	return util.Flatten(f.recon), nil
+	return internal.Flatten(f.recon), nil
 }
+
 
 
