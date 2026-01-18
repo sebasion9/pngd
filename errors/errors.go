@@ -38,6 +38,10 @@ type InvalidFilterError struct {
 	*BaseDecoderError
 }
 
+type NotImplementedError struct {
+	*BaseDecoderError
+}
+
 func NewInvalidSignatureError(msg string) *InvalidSignatureError {
 	return &InvalidSignatureError{&BaseDecoderError{Message: msg}}
 }
@@ -64,4 +68,8 @@ func NewInvalidIENDChunk(msg string) *InvalidIENDChunk{
 
 func NewInvalidFilterError(msg string) *InvalidFilterError{
 	return &InvalidFilterError{&BaseDecoderError{Message:msg}}
+}
+
+func NewNotImplementedError(msg string) *NotImplementedError{
+	return &NotImplementedError{&BaseDecoderError{Message:msg}}
 }

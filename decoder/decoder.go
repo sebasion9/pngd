@@ -31,6 +31,13 @@ type Decoder struct {
 	Warnings []string
 }
 
+func (d *Decoder) Info() {
+	fmt.Printf("[i] IHDR dump start\n")
+	fmt.Printf("[i] interlace:  %d\n", d.IHDR.Interlace)
+	fmt.Printf("[i] color type: %v\n", d.IHDR.ColorType)
+	fmt.Printf("[i] IHDR dump end\n")
+}
+
 func NewDecoder(source []byte) *Decoder {
 	return &Decoder{ Source: source }
 }
@@ -166,6 +173,11 @@ func (d *Decoder) ReadChunk() error {
 		}
 
 		d.IHDR = *parseIHDR(chunk_data)
+
+		if d.IHDR.Interlace == 1 {
+			return errors.NewNotImplementedError("Interlacing not implemented")
+		}
+
 		d.Chunks = append(d.Chunks, &d.IHDR)
 	case tEXt:
 		tEXt_chunk, err := parseTEXT(chunk_data, chunk_len_uint)
@@ -183,7 +195,7 @@ func (d *Decoder) ReadChunk() error {
 
 		d.IDATChunks = append(d.IDATChunks, *idat_chunk)
 		d.Chunks = append(d.Chunks, idat_chunk)
-	case PLTE:
+	// case PLTE:
 		//TODO:
 	case IEND:
 		if chunk_len_uint != 0 {

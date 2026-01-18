@@ -57,9 +57,6 @@ func (f *Filter) Up(idx int) {
 	for i := 0; i < len(recon); i++ {
 		recon[i] = scanline[i + 1] + prev[i]
 	}
-	fmt.Println("prev\t\t", prev[:20])
-	fmt.Println("this\t\t", scanline[1:20])
-	fmt.Println("recon\t\t", recon[:20])
 	f.Recon[idx] = recon
 }
 

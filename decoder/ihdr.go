@@ -23,6 +23,26 @@ var bpp_map = map[byte]byte {
     6:4,
 }
 
+type ColorType int
+const (
+    RGB ColorType = iota
+    RGBA
+    G
+    GA
+    IDX
+)
+
+var color_type_map = map[byte]ColorType{
+    0:G,
+    2:RGB,
+    3:IDX,
+    4:GA,
+    6:RGBA,
+}
+
+func (c *IHDRChunk) GetColorType() ColorType {
+    return color_type_map[c.ColorType]
+}
 
 func parseIHDR(data []byte) *IHDRChunk {
     w := binary.BigEndian.Uint32(data[:4])

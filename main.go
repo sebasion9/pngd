@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
-	"image"
-	"image/color"
 	"os"
+	"pngd/bmp"
 	"pngd/cli"
-	"pngd/decoder"
+	dc "pngd/decoder"
+	"pngd/util"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/image/bmp"
 )
 
 func main() {
@@ -38,7 +37,7 @@ func run(opts *cli.Options) error {
 	}
 
 
-	decoder := decoder.NewDecoder(bytes)
+	decoder := dc.NewDecoder(bytes)
 	if err = decoder.ValidateSignature(); err != nil {
 		return err
 	}
@@ -51,6 +50,18 @@ func run(opts *cli.Options) error {
 		fmt.Println(w)
 	}
 
+	buf := util.Flatten(decoder.Filter.Recon)
+
+	decoder.Info()
+	switch ct := decoder.IHDR.GetColorType();{
+	case ct == dc.RGB:
+		bmp.RGBToBMP(opts.Output, int(decoder.IHDR.Width), int(decoder.IHDR.Height), buf)
+	case ct == dc.RGBA:
+		bmp.RGBAToBMP(opts.Output, int(decoder.IHDR.Width), int(decoder.IHDR.Height), buf)
+	default:
+	}
+
 	return nil
 }
+
 

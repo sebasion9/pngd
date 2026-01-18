@@ -19,7 +19,7 @@ func(c *BaseChunk) Length() uint64 { return c.length}
 type chunk_type int
 const (
 	IHDR chunk_type = iota
-	PLTE
+	// PLTE
 	IDAT
 	IEND
 
@@ -29,7 +29,7 @@ const (
 //TODO: all types
 var chunk_type_map = map[string]chunk_type{
 	"IHDR": IHDR,
-	"PLTE": PLTE,
+	// "PLTE": PLTE,
 	"IDAT": IDAT,
 	"IEND": IEND,
 

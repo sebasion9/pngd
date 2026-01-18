@@ -27,3 +27,16 @@ func PaethPredictor(a, b, c byte) byte {
 	}
 	return c
 }
+
+func Flatten(rows [][]byte) []byte {
+    var total int
+    for _, row := range rows {
+        total += len(row)
+    }
+
+    flat := make([]byte, 0, total)
+    for _, row := range rows {
+        flat = append(flat, row...)
+    }
+    return flat
+}
