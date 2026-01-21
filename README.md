@@ -2,14 +2,21 @@
 
 ## Examples
 
-1. Write PNG to terminal
+### Draw PNG to terminal
 
 ```
 go run ./examples/rgb/rgb.go /path/to/png
 ```
-
-To run in ascii mode
-
+Or run in ascii mode
 ```
 go run ./examples/rgb/rgb.go /path/to/png --ascii
+```
+
+### Draw video
+
+Example with transcoding mp4 to avi.
+
+```
+ffmpeg -i /path/to/vid.mp4 -c:v png -an /path/output/vid.avi
+go run examples/avi/avi.go /path/to/vid.avi
 ```
