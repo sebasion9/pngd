@@ -21,7 +21,6 @@ ffmpeg -i /path/to/vid.mp4 -c:v png -an /path/output/vid.avi
 go run examples/avi/avi.go /path/to/vid.avi
 ```
 
-<p align="center" width="100%">
-<video src="https://git.franzlla.ng/sebasion/pngd/assets/badapple.mp4" width="80%" controls></video>
-</p>
+https://github.com/user-attachments/assets/fb7d232e-ed08-4006-b9ce-34f7561c2cf3
+
 
